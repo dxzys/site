@@ -1,0 +1,101 @@
+---
+title: "Identifying Duplicate Mass Shooting Records in the Gun Violence Archive"
+date: "2025-09-22"
+---
+
+Some time ago, I was working on a project that merges multiple mass shooting databases into a single master dataset. It's called [MSMDB](https://github.com/dxzys/MSMDB), or Mass Shootings Master Database. The most comprehensive source used in this project is the [Gun Violence Archive](https://www.gunviolencearchive.org/) (GVA), which has catalogued over 5,700 mass shooting incidents since 2013.
+> ##### *Note: This is partly because there is no clear consensus on what defines a mass shooting. GVA defines it as being incidents with four or more people shot. Other sources apply filters to this rule or go by other definitions (example FBI considers it to be 4+ killed).*
+
+## Incident Deduplication 
+
+Because MSMDB merges data from multiple sources, there's prone to be duplicate incidents. For that reason, I implemented deduplication logic that merges records with identical or exteremely similar fields.
+
+The deduplication process was intended to merge duplicate records of the *same* incident from across multiple databases. When manually reviewing flagged duplicates, I found that some incidents being marked as "duplicates" were two distinct incidents from the GVA database (with separate incident IDs).
+
+This shouldn't have been happening in the first place considering these were two separate incidents from the same source (GVA), which I had assumed wouldn't contain duplicates.
+
+Incident deduplication largely relied on comparing their coordinates and dates: records would be merged if they were within one mile and day of each other. This resulted in GVA incidents within close proximity of each other and on the same date being treated as duplicates and merged.
+
+I lowered the geographical threshold to half a mile, but I was still getting false positives. For example:
+
+| Incident ID | Date              | Address                   | Killed | Injured | ... | Latitude        | Longitude         |
+|-------------|-------------------|---------------------------|--------|---------|-----|-----------------|-------------------|
+| 2192046     | December 17, 2021 | 1300 block of W North Ave | 1      | 4       | ... | 39.310198925452 | -76.639541672845  |
+| 2191752     | December 17, 2021 | 600 block of Laurens St   | 1      | 3       | ... | 39.303712703668 | -76.636384414946  |
+
+These two incidents were flagged as duplicates. The calculated distance between their coordinates was 0.479 miles which was just under the threshold. This and the fact that they occurred on the same day caused them to be incorrectly merged.
+
+## Discovering Duplicate Incidents
+
+I continued lowering the threshold and manually reviewing flagged duplicates until I found something interesting:
+
+| Incident ID | Date           | Address              | Killed | Injured | ... | Latitude        | Longitude        |
+|-------------|----------------|----------------------|--------|---------|-----|-----------------|------------------|
+| 2255832     | March 16, 2022 | 800 block of 18th Ave| 1      | 3       | ... | 40.73763619978  | -74.222439374877 |
+| 2256080     | March 16, 2022 | 862 18th Ave         | 1      | 3       | ... | 40.73798250907  | -74.222869088046 |
+
+These incidents were only 0.0328 miles apart. My first thought was that this might have been a geolocating inaccuracy from ArcGIS, which I used to generate coordinates. Instead of continuing to make my logic more and more lenient, I decided to manually check the GVA entries for both incidents:
+
+**[Incident 2255832](https://www.gunviolencearchive.org/incident/2255832):**
+```
+Type: Victim
+Name: Faquan Davis
+Age: 44
+Age Group: Adult 18+
+Gender: Male
+Status: Killed
+```
+**[Incident 2256080](https://www.gunviolencearchive.org/incident/2256080):**
+```
+Type: Victim
+Name: Fuquan Davis
+Age: 44
+Age Group: Adult 18+
+Gender: Male
+Status: Killed
+```
+
+These are clearly the same victim ("Faqual" vs. "Fuquan") yet these are catalogued on the GVA as two separate incidents. Both entries even cite the same news source: https://pix11.com/news/local-news/new-jersey/one-killed-in-irvington-quadruple-shooting-officials/
+
+## Additional Duplicate Cases
+
+I wanted to see if there were any other duplicate incidents in the GVA database. Here's what I found:
+
+### Case 2
+
+| Incident ID | Date           | Address                    | Killed | Injured | ... | Latitude        | Longitude        |
+|-------------|----------------|----------------------------|--------|---------|-----|-----------------|------------------|
+| 2136132     | October 6, 2021| 9200 block of Marshall Ave | 0      | 4       | ... | 41.470064429739 | -81.621943822579 |
+| 2135659     | October 6, 2021| Marshall Ave and E 93rd St | 0      | 4       | ... | 41.470068996525 | -81.621493968005 |
+
+These are the same incident: music studio shooting, 4 injured, age and gender of the victims are the same, etc.
+* https://www.gunviolencearchive.org/incident/2136132
+* https://www.gunviolencearchive.org/incident/2135659
+
+### Case 3
+
+| Incident ID | Date           | Address                  | Killed | Injured | ... | Latitude        | Longitude        |
+|-------------|----------------|--------------------------|--------|---------|-----|-----------------|------------------|
+| 1765624     | August 16, 2020| 700 block of Chalfonte Pl| 1      | 3       | ... | 39.150103442521 | -84.488763354682 |
+| 1766423     | August 16, 2020| 700 block of Chalfonte Pl| 1      | 3       | ... | 39.150103442521 | -84.488763354682 |
+
+Same incident:
+* https://www.gunviolencearchive.org/incident/1766423
+* https://www.gunviolencearchive.org/incident/1765624
+
+### Case 4
+
+| Incident ID | Date           | Address              | Killed | Injured | ... | Latitude        | Longitude        |
+|-------------|----------------|----------------------|--------|---------|-----|-----------------|------------------|
+| 3150525     | September 6, 2014| 576 Poplar St      | 0      | 5       | ... | 32.834771248901 | -83.629953285507 |
+| 186488      | September 6, 2014| 576 Poplar Street  | 0      | 5       | ... | 32.834771248901 | -83.629953285507 |
+
+Same incident:
+* https://www.gunviolencearchive.org/incident/3150525
+* https://www.gunviolencearchive.org/incident/186488
+
+## Conclusion
+
+In total, I found four pairs of mass shooting incidents (a total of eight records) where the GVA's data catalogued the same event twice.
+
+I don't believe these findings indicate that the GVA is intentionally "inflating" their data or that they are an unreliable source. In fact, four duplicates out of over 5,700 catalogued mass shootings in over a decade indicates quite a stellar track record. It's a very small margin of error. However, for a database cited as widely as the GVA is, it's important that these duplicate records are addressed and fixed as soon as possible to maintain a perfect accuracy.
