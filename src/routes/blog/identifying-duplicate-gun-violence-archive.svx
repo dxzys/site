@@ -34,7 +34,7 @@ I continued lowering the threshold and manually reviewing flagged duplicates unt
 | 2255832     | March 16, 2022 | 800 block of 18th Ave| 1      | 3       | ... | 40.73763619978  | -74.222439374877 |
 | 2256080     | March 16, 2022 | 862 18th Ave         | 1      | 3       | ... | 40.73798250907  | -74.222869088046 |
 
-These incidents were only 0.0328 miles apart. My first thought was that this might have been a geolocating inaccuracy from ArcGIS, which I used to generate coordinates. Instead of continuing to make my logic more and more lenient, I decided to manually check the GVA entries for both incidents:
+These incidents were only 0.0328 miles apart. My first thought was that this might have been a geolocating inaccuracy from ArcGIS, which I used to generate coordinates for each incident (see [this project](https://github.com/dxzys/Gun-Violence-Data) for more info). Instead of continuing to make my logic more and more lenient, I decided to manually check the GVA entries for both incidents:
 
 **[Incident 2255832](https://www.gunviolencearchive.org/incident/2255832):**
 ```
