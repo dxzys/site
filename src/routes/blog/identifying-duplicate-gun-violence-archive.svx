@@ -55,7 +55,7 @@ Gender: Male
 Status: Killed
 ```
 
-These are clearly the same victim ("Faqual" vs. "Fuquan") yet these are catalogued on the GVA as two separate incidents. Both entries even cite the same news source: https://pix11.com/news/local-news/new-jersey/one-killed-in-irvington-quadruple-shooting-officials/
+These are clearly the same victim ("Faquan" vs. "Fuquan") yet these are catalogued on the GVA as two separate incidents. Both entries even cite the same news source: https://pix11.com/news/local-news/new-jersey/one-killed-in-irvington-quadruple-shooting-officials/
 
 ## Additional Duplicate Cases
 
