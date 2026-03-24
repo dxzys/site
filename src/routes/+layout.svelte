@@ -12,6 +12,7 @@
 		const redirect = sessionStorage.redirect;
 		if (redirect) {
 			delete sessionStorage.redirect;
+			delete sessionStorage.gh_redirect_pending;
 			goto(redirect);
 		}
 	});
