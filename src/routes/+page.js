@@ -1,5 +1,5 @@
 export async function load({ fetch }) {
-	const response = await fetch('/api/posts');
+	const response = await fetch('/posts.json');
 	const posts = await response.json();
 
 	return {
