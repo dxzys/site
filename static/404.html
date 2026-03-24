@@ -4,8 +4,17 @@
     <meta charset="utf-8" />
     <title>Redirecting...</title>
     <script>
-        const path = window.location.pathname;
-        sessionStorage.redirect = path;
+        (function() {
+            if (window.location.pathname === '/index.html' || window.location.pathname === '/') {
+                return;
+            }
+            if (sessionStorage.getItem('gh_redirect_pending')) {
+                return;
+            }
+            const path = window.location.pathname;
+            sessionStorage.setItem('gh_redirect_pending', 'true');
+            sessionStorage.redirect = path;
+        })();
     </script>
     <meta http-equiv="refresh" content="0;URL='/index.html'" />
 </head>
